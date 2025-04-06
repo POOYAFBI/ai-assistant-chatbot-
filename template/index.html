@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e8f1f9, #d0e3f3, #b8d5ed);
+        }
+        .chat-container {
+            width: 800px;
+            max-width: 95%;
+            height: 600px;
+            background-color: #f6f9fc;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            background: linear-gradient(45deg, #0073e6, #005bb5);
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #ebf5ff;
+            scroll-behavior: smooth;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            line-height: 1.5;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .bot-message {
+            background-color: #005bb5;
+            color: #ffffff;
+            align-self: flex-start;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .user-message {
+            background-color: #0073e6;
+            color: #ffffff;
+            align-self: flex-end;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chat-input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            background-color: #f6f9fc;
+            border-top: 1px solid #d0e3f3;
+            align-items: center;
+        }
+        .input-and-send {
+            display: flex;
+            width: 100%;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .chat-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background-color: #ffffff;
+            color: #333333;
+            margin-right: 10px;
+            transition: box-shadow 0.3s ease;
+            outline: none;
+            font-size: 16px;
+        }
+        .chat-input:focus {
+            box-shadow: 0 0 10px #0073e6;
+        }
+        .send-button {
+            background-color: #005bb5;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-size: 14px;
+            text-align: center;
+            position: relative;
+        }
+        .send-button:hover {
+            background: linear-gradient(45deg, #0073e6, #005bb5);
+            transform: scale(1.1);
+        }
+
+        .voice-button {
+            background-color: #0073e6;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .voice-button.recording {
+            background-color: #ff7043;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .status-message {
+            margin-top: 10px;
+            color: #555555;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Tax & Accounting Assistant</h2>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+        <div class="message bot-message">Hello! im pooya jafarpour's Ai Tax & Accounting Assistant !! 
+            you can talk with me by recording your voice or simply texting me&#128515;
+        </div>
+    </div>
+    <div class="chat-input-area">
+        <button class="voice-button" id="recordButton">RECORD</button>
+        <div class="input-and-send">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Type your message here...">
+            <button class="send-button" id="sendButton">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+</div>
+
+<audio id="recordSound" src="record-sound.mp3"></audio>
+<audio id="sendSound" src="send-sound.mp3"></audio>
+
+<script>
+let isRecording = false;
+let mediaRecorder;
+let audioChunks = [];
+const recordButton = document.getElementById('recordButton');
+const sendButton = document.getElementById('sendButton');
+const statusMessage = document.getElementById('statusMessage');
+const chatInput = document.getElementById('chat-input');
+const recordSound = document.getElementById('recordSound');
+const sendSound = document.getElementById('sendSound');
+
+chatInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+});
+
+sendButton.addEventListener('click', () => {
+    sendMessage();
+});
+
+recordButton.addEventListener('click', async () => {
+    if (isRecording) {
+        mediaRecorder.stop();
+        recordButton.textContent = 'RECORD';
+        recordButton.classList.remove('recording');
+        statusMessage.textContent = 'Recording stopped. Uploading audio...';
+    } else {
+        try {
+            audioChunks = [];
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+
+                try {
+                    const response = await fetch('/process_audio', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+                    if (response.ok) {
+                        console.log('Server Response:', data);
+                        displayMessage('bot', data.response_text);
+                        playAudio(data.audio_file);
+                    } else {
+                        console.error('Error Response:', data);
+                        displayMessage('bot', `Error: ${data.error}`);
+                    }
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    displayMessage('bot', `Upload failed: ${error.message}`);
+                }
+                statusMessage.textContent = '';
+            };
+
+            mediaRecorder.start();
+            recordButton.textContent = 'STOP';
+            recordButton.classList.add('recording');
+            statusMessage.textContent = 'Recording...';
+            recordSound.play();
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            alert('Unable to access microphone. Please check your permissions.');
+        }
+    }
+
+    isRecording = !isRecording;
+});
+
+async function sendMessage() {
+    const message = chatInput.value;
+    if (!message) return;
+
+    displayMessage('user', message);
+
+    sendSound.play();
+
+    const response = await fetch('/process_text', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: message })
+    });
+
+    const data = await response.json();
+    displayMessage('bot', data.response_text);
+    playAudio(data.audio_file);
+    
+    chatInput.value = '';
+}
+
+function displayMessage(sender, message) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', `${sender}-message`);
+    messageElement.textContent = message;
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function playAudio(file) {
+    const url = `/static/${file}`;
+    const audio = new Audio(url);
+    audio.play();
+}
+
+</script>
+
+</body>
+</html>
