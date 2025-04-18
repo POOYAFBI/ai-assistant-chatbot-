@@ -16,8 +16,8 @@ from datetime import datetime, timedelta
 app = Flask(__name__, template_folder='template')
 CORS(app)
 
-openai.api_key = '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'
-elevenlabs_api_key = 'sk_5ef69028ca0c306f8186d8621f3ab1a06d1763befa002157'
+openai.api_key = 'کلید api نمونه 08'
+elevenlabs_api_key = 'کلید api نمونه 01'
 client = ElevenLabs(api_key=elevenlabs_api_key)
 
 MAX_TOKENS_PER_DAY = 20
